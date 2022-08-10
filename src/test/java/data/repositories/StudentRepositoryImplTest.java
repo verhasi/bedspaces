@@ -12,9 +12,11 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StudentRepositoryImplTest {
     private StudentRepository studentStudentRepository = new StudentRepository();
+    private StudentRepositoryStub studentRepositoryStub = new StudentRepositoryStub();
     private Student studentOne;
     private Student studentTwo;
     @BeforeEach
@@ -39,9 +41,12 @@ class StudentRepositoryImplTest {
     @Test
     void findByMatricNumber() throws Exception {
         try{
+            studentRepositoryStub.useCase_findByMatricNumber(studentOne);
+            Student studentStub = studentRepositoryStub.getStub().findById("PSC1004396")
+                    .orElseThrow(()->new HostelManagementException("No student found in the stub with specified matric number"));;
             Student student = studentStudentRepository.findById("PSC1004396")
                     .orElseThrow(()->new HostelManagementException("No student found with specified matric number"));
-            assertThat(student.getFirstName(), equalTo("Ehis"));
+            assertThat(student, equalTo(studentStub));
         }
         catch (HostelManagementException exception){
             Assertions.fail(exception);
@@ -50,9 +55,11 @@ class StudentRepositoryImplTest {
 
     @Test
     void findByName() {
+        studentRepositoryStub.useCase_findByName(studentOne);
+        List<Student> studentListStub = studentRepositoryStub.getStub().findByName("Ehis Edemakhiota");
         List<Student> studentList = studentStudentRepository
                                     .findByName("Ehis Edemakhiota");
-        assertThat(studentList, hasItem(studentOne));
+        assertEquals(studentList, studentListStub);
     }
 
     @Test
