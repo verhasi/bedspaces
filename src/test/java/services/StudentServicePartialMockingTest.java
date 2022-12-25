@@ -22,11 +22,10 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockingDetails;
 
 
 @ExtendWith(MockitoExtension.class)
-public class StudentServiceImpl_PartialMockingTests {
+public class StudentServicePartialMockingTest{
     private StudentService studentService;
     @Spy
     private StudentRepository studentRepository;

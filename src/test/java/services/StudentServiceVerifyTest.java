@@ -6,7 +6,6 @@ import data.repositories.HostelRepository;
 import data.repositories.StudentRepository;
 import dto.RegistrationRequest;
 import dto.StudentDto;
-import exceptions.HostelManagementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,28 +15,25 @@ import org.mockito.InOrder;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class StudentServiceImpl_VerifyTests {
+public class StudentServiceVerifyTest
+{
     private StudentService studentService;
     @Spy
     private StudentRepository studentRepository;
     @Spy
     private HostelRepository hostelRepository;
-    private LocalDateTime time;
-    private Student student;
 
     @Captor
     ArgumentCaptor<Student> studentArgumentCaptor;
 
     @BeforeEach
     void setUp() {
-        time = null;
         studentService = new StudentServiceImpl(studentRepository, hostelRepository);
     }
 
