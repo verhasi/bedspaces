@@ -7,12 +7,10 @@ import dto.RegistrationRequest;
 import dto.StudentDto;
 import exceptions.DuplicateIdException;
 import exceptions.HostelManagementException;
-import net.bytebuddy.dynamic.DynamicType;
 import org.junit.jupiter.api.BeforeEach;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,107 +36,38 @@ class StudentServiceStubbingTest
     private StudentRepository studentRepository;
     @Mock
     private HostelRepository hostelRepository;
+
+    private StudentServiceMocker studentServiceMocker;
+    private StudentRepositoryMocker studentRepositoryMocker;
+
     private LocalDateTime time;
+
 
     @BeforeEach
     void setUp() {
-        time =  LocalDateTime.now();
-        studentService = new StudentServiceImpl(studentRepository, hostelRepository);
+        time = LocalDateTime.now();
+        studentServiceMocker = new StudentServiceMocker(time);
+        studentRepositoryMocker = new StudentRepositoryMocker(time);
+        studentService = new StudentServiceImpl(studentRepositoryMocker.getMock(), hostelRepository);
     }
 
 
     @Test
-    void registerStudentTest() throws Exception {
+    void registerStudent_normalStudent_registers() throws Exception {
 //Given
-        Student studentToSave = Student.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .matricNo("MAT100419")
-                .password("securedPassword")
-                .registrationTime(LocalDateTime.now())
-                .gender(Gender.MALE).build();
-        when(studentRepository.save(any(Student.class))).thenReturn(studentToSave);
-//When
-        RegistrationRequest registrationRequest = new RegistrationRequest(
-                "John",
-                "Doe",
-                "securedPassword",
-                "MAT100419",
-                Gender.MALE);
-        StudentDto studentDto = studentService.registerStudent(registrationRequest);
-//Then
-        assertThat(studentDto, hasProperty("firstName", equalTo("John")));
-        assertThat(studentDto, hasProperty("lastName", equalTo("Doe")));
-        assertThat(studentDto, hasProperty("matricNo", equalTo("MAT100419")));
-        assertThat(studentDto, hasProperty("gender", equalTo(Gender.MALE)));
-    }
-
-    @Test
-    void registerStudentTest_WithRegistrationTime() throws Exception {
-//Given
-        Student student = Student.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .matricNo("MAT100419")
-                .password("securedPassword")
-                .registrationTime(time)
-                .gender(Gender.MALE).build();
-
-        when(studentRepository.save(any(Student.class))).thenAnswer(answer -> student);
-//When
-        RegistrationRequest registrationRequest = new RegistrationRequest(
-                "John",
-                "Doe",
-                "securedPassword",
-                "MAT100419",
-                Gender.MALE);
-        StudentDto studentDto = studentService.registerStudent(registrationRequest);
-//Then
-        assertThat(studentDto, hasProperty("firstName", equalTo("John")));
-        assertThat(studentDto, hasProperty("lastName", equalTo("Doe")));
-        assertThat(studentDto, hasProperty("matricNo", equalTo("MAT100419")));
-        assertThat(studentDto, hasProperty("registrationTime", equalTo(time)));
-        assertThat(studentDto, hasProperty("gender", equalTo(Gender.MALE)));
-    }
-
-    @Test
-    void findStudentByIdTest() throws Exception {
-//Given
-        Student student = Student.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .matricNo("MAT100419")
-                .password("securedPassword")
-                .gender(Gender.MALE).build();
-        when(studentRepository.findById(anyString())).thenReturn(Optional.of(student));
-//When
-        Student returnValue = studentRepository.findById("string").orElse(null);
-//Then
-        assertNotNull(returnValue);
-        assertThat(returnValue, hasProperty("firstName", equalTo("John")));
-        assertThat(returnValue, hasProperty("lastName", equalTo("Doe")));
-        assertThat(returnValue, hasProperty("matricNo", equalTo("MAT100419")));
-        assertThat(returnValue, hasProperty("password", equalTo("securedPassword")));
-        assertThat(returnValue, hasProperty("gender", equalTo(Gender.MALE)));
-    }
-
-    @Test
-    void testThrowDuplicateIdException() throws Exception {
-//Given
-        Student student = Student.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .matricNo("MAT100419")
-                .password("securedPassword")
-                .gender(Gender.MALE).build();
-        when(studentRepository.findById(anyString())).thenReturn(Optional.of(student));
+        studentRepositoryMocker.givenUCSaveStudent();
+        studentServiceMocker.givenUCStudentRegistration(studentService);
 //When+Then
-        RegistrationRequest registrationRequest = new RegistrationRequest(
-                "John",
-                "Doe",
-                "securedPassword",
-                "MAT100419",
-                Gender.MALE);
+        studentServiceMocker.whenCalled().thenAssert();
+    }
+
+    @Test
+    void registerStudent_duplicateMatricNo_throwsDuplicateIdException() throws Exception {
+//Given
+        String matricNo = studentRepositoryMocker.givenUCRegisterStudent_duplicateMatricNo();
+        RegistrationRequest registrationRequest = studentServiceMocker.givenUCRegisterStudent_duplicateMatricNo(matricNo);
+//When+Then
+
         assertThatThrownBy(() -> studentService.registerStudent(registrationRequest))
                 .isInstanceOf(DuplicateIdException.class)
                 .hasMessage("student record with matric number already exists");
